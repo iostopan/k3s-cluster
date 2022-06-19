@@ -1,6 +1,7 @@
 # Setting up WordPress Static Website with helm on k3s cluster running on Proxmox VE
 
-## Base Setup
+## Intro and Base Setup
+This is a documentation of my homelab project to learn virtualization, kubernetes, container deployment, nginx, database management systems and web security. It will be changing and evolving, mostly serving as a guide for myself but also to everyone who would like to try out the project.
 
 ### Hardware
 
@@ -39,7 +40,7 @@ Host pve
 
 Changing the `192.168.X.X` to the IP of the Proxmox virtual machine.
 
-2. Create an SSH identity on the workstation running `ssh-keygen`
+2. Created an SSH identity on the workstation running `ssh-keygen`
 3. Run `ssh-copy-id pve` to confirm SSH key fingerprint and remote password chosen during install to login to the Proxmox server via SSH.
 4. SSH to the Proxmox host: `ssh pve`
 5. Disable password authentication editing with your favorite text editor `/etc/ssh/sshd_config`
@@ -68,7 +69,7 @@ Firewall is disabled by default and is now enabled.
 ```bash
 wget  http://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img
 ```
-3. Create a new VM that will serve as a template:
+3. Created a new VM that will serve as a template:
 
 ```bash
 qm create 9000
@@ -324,3 +325,42 @@ In the Proxmox web interface. Click on each VM of the cluster and create snapsho
 2. Start all VMs and wait for them to load. Take another set of snapshots, this time with the machines running check `Include RAM` on each. Name them something like `k3s_1_on`
 
 Make sure to create new snapshots everytime you make major changes.
+
+## GitHub Repo
+1. Created a `k3s-clustre` repo through the online interface in GitHub
+2. Created a local repo in $HOME/Code/github/k3s-cluster
+3. Setting up remote repo using `git`:
+
+```bash
+git init -b main
+git add .
+# Adds the files in the local repository and stages them for commit. To unstage a file, use 'git reset HEAD YOUR-FILE'.
+git commit -m "First Commit"
+# Commits the tracked changes and prepares them to be pushed to a remote repository. To remove this commit and modify the file, use 'git reset --soft HEAD~1' and commit and add the file again.
+```
+
+4. Copy remote repository URL from GitHub:
+
+```bash
+git remote add origin <REMOTE_URL>
+# Sets the new remote
+git remote -v
+# Verifies the new remote URL
+```
+
+5. Pushing changes from local to remote:
+
+```bash
+git push origin main
+```
+6. Adding local file in the future:
+
+```bash
+git add .
+# Adds the file to your local repository and stages it for commit. To unstage a file, use 'git reset HEAD YOUR-FILE'.
+git commit -m "Commit Description"
+# Commits the tracked changes and prepares them to be pushed to a remote repository. To remove this commit and modify the file, use 'git reset --soft HEAD~1' and commit and add the file again.
+git push origin main
+# Pushes the changes in your local repository up to the remote repository you specified as the origin
+```
+
