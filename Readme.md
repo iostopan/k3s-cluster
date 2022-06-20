@@ -1,4 +1,4 @@
-# Setting up WordPress Static Website with helm on k3s cluster running on Proxmox VE
+# Setting up k3s cluster running on Proxmox VE
 
 ## Intro and Base Setup
 This is a documentation of my homelab project to learn virtualization, kubernetes, container deployment, nginx, database management systems and web security. It will be changing and evolving, mostly serving as a guide for myself but also to everyone who would like to try out the project.
