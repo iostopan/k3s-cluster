@@ -22,6 +22,47 @@ The `NUC8i3BEH` workstation is currently running `Solus OS x86_64`. Desktop conf
 
 ![[scrot.png]]
 
+## GitHub Repo
+
+I'll be creating a GitHub repo to contain all my documentation and some config files.
+
+1. Created a `k3s-cluster` repo through the online interface in GitHub
+2. Created a local repo in $HOME/Code/github/k3s-cluster
+3. Setting up remote repo using `git`:
+
+```bash
+git init -b main
+git add .
+# Adds the files in the local repository and stages them for commit. To unstage a file, use 'git reset HEAD YOUR-FILE'.
+git commit -m "First Commit"
+# Commits the tracked changes and prepares them to be pushed to a remote repository. To remove this commit and modify the file, use 'git reset --soft HEAD~1' and commit and add the file again.
+```
+
+4. Copy remote repository URL from GitHub:
+
+```bash
+git remote add origin <REMOTE_URL>
+# Sets the new remote
+git remote -v
+# Verifies the new remote URL
+```
+
+5. Pushing changes from local to remote:
+
+```bash
+git push origin main
+```
+6. Adding local file in the future:
+
+```bash
+git add .
+# Adds the file to your local repository and stages it for commit. To unstage a file, use 'git reset HEAD YOUR-FILE'.
+git commit -m "Commit Description"
+# Commits the tracked changes and prepares them to be pushed to a remote repository. To remove this commit and modify the file, use 'git reset --soft HEAD~1' and commit and add the file again.
+git push origin main
+# Pushes the changes in your local repository up to the remote repository you specified as the origin
+```
+
 ## Setting up VM Environment
 For this step I've been consulting a tutorial on [EnigmaCurry's dev blog](https://blog.rymcg.tech/)
 
@@ -227,6 +268,22 @@ cat /var/lib/rancher/k3s/server/node-token
 # Install K3s worker agent: fill in K3S_URL and K3S_TOKEN
 curl -sfL https://get.k3s.io | K3S_URL=https://192.168.X.X:6443 K3S_TOKEN=xxxx sh
 ```
+### DHCP Reservations
+
+As this is a home, low-budget project, the cluster IPs are generated through `DHCP`. I'm not using static IPs but my ISP / router settings do provide `DHCP Reservations`. In my case, I used each of the VMs `MAC Address` to reseve a slot between the `192.168.1.0` - `192.168.1.100` IP range.
+
+To find the `MAC Address` of each VM:
+
+1. Go to the Proxmox VE web insterface.
+2. Click on the VM in the `Server View` list.
+3. Click on `Hardware` -> `Network Device`
+4. Copy the `MAC Address` in your ISP's `DHCP Reservations` options and assign the desired IP.
+
+In my case, `pve-k3s-1` - the master node is reserverd at `192.168.1.7`
+
+If you don't do this, there is a rish of your nodes changing IPs within your network and bringing chaos into your configuration files. If the IPs change, `hosts`, kubernetes configs and other settings that requried the VM IPs will need to be reconfigured.
+
+5. Restart all machines and check if the IPs are the same by `ssh` into each of them.
 
 ### Local Workstation Access
 
@@ -236,12 +293,12 @@ Exit the `ssh` sessions from the nodes and return to the workstation.
 
 ```bash
 mkdir -p $HOME/.kube && \
-scp pve-k3s-1:/etc/rancher/k3s/k3s.yaml $HOME/.kube/pve-k3s && \
-echo "export KUBECONFIG=$HOME/.kube/pve-k3s" >> $HOME/.bash_profile && \
-export KUBECONFIG=$HOME/.kube/pve-k3s
+scp pve-k3s-1:/etc/rancher/k3s/k3s.yaml $HOME/.kube/config && \
+echo "export KUBECONFIG=$HOME/.kube/config" >> $HOME/.bash_profile && \
+export KUBECONFIG=$HOME/.kube/config
 ```
 
-2. No edit `$HOME/.kube/pve-k3s` file and replace `127.0.0.1` with the IP address of the `master` node. Also find and replace `default` with the name of the cluster `k3s-1` and save the file.
+2. Now edit `$HOME/.kube/config` file and replace `127.0.0.1` with the IP address of the `master` node. Also find and replace `default` with the name of the cluster `k3s-1` and save the file.
 
 ### Install `kubectl` and `helm`
 
@@ -279,22 +336,6 @@ sudo apt-get update
 sudo apt-get install -y kubectl
 ```
 
-#### helm
-
-Consult the official [helm docs](https://helm.sh/docs/intro/install/) to choose the best way to install `helm` on your particular workstation.
-
-I chose the binary release, as there isn't an official package in the Solus repos.
-
-If you're on an Ubuntu or Debian based system:
-
-```bash
-curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
-sudo apt-get install apt-transport-https --yes
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
-sudo apt-get update
-sudo apt-get install helm
-```
-
 ### Running
 
 1. Test that `kubectl` works.
@@ -316,7 +357,54 @@ Don't worry of the worker nodes have `<none>` values. Everything is working.
 
 You now have a working k3s cluster running on Proxmox.
 
+#### helm
+
+Consult the official [helm docs](https://helm.sh/docs/intro/install/) to choose the best way to install `helm` on your particular workstation.
+
+I chose the binary release, as there isn't an official package in the Solus repos.
+
+If you're on an Ubuntu or Debian based system:
+
+```bash
+curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+sudo apt-get install apt-transport-https --yes
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+sudo apt-get update
+sudo apt-get install helm
+```
+It's a good idea to add some chart repositories now:
+
+1. Add `bitnami` repo:
+
+```bash
+helm repo add bitnami https://charts.bitnami.com/bitnami
+```
+2. Add `kubernetes at home` repo:
+
+```bash
+helm repo add k8s-at-home https://k8s-at-home.com/charts/
+```
+
+3. Add `helm stable` repo:
+
+```bash
+helm repo add stable https://charts.helm.sh/stable
+```
+
+*Note that many charts in this repo are deprecated.*
+
+To search for charts in a particular repo:
+
+```bash
+helm search repo <repo name>
+```
+
+Replace `<repo name>` with the actual name of your chosen repository.
+
+
 ### Create snapshots in Proxmox
+
+Now that the basic setup is complete, it's a good idea to create some snapshots to revert to this base level configuration easily. 
 
 In the Proxmox web interface. Click on each VM of the cluster and create snapshots:
 
@@ -326,41 +414,21 @@ In the Proxmox web interface. Click on each VM of the cluster and create snapsho
 
 Make sure to create new snapshots everytime you make major changes.
 
-## GitHub Repo
-1. Created a `k3s-clustre` repo through the online interface in GitHub
-2. Created a local repo in $HOME/Code/github/k3s-cluster
-3. Setting up remote repo using `git`:
+### Installing helm charts
+
+#### nginx-ingress-controller
+
+I'll be using the `nginx-ingress-controller` chart from the `bitnami` repo.
+
+1. Installation:
+```bash
+helm install nginx-ingress bintami/nginx-ingress-controller
+```
+2. Check status:
 
 ```bash
-git init -b main
-git add .
-# Adds the files in the local repository and stages them for commit. To unstage a file, use 'git reset HEAD YOUR-FILE'.
-git commit -m "First Commit"
-# Commits the tracked changes and prepares them to be pushed to a remote repository. To remove this commit and modify the file, use 'git reset --soft HEAD~1' and commit and add the file again.
+kubectl get --namespace default svc -w nginx-ingress-nginx-ingress-controller
 ```
 
-4. Copy remote repository URL from GitHub:
-
-```bash
-git remote add origin <REMOTE_URL>
-# Sets the new remote
-git remote -v
-# Verifies the new remote URL
-```
-
-5. Pushing changes from local to remote:
-
-```bash
-git push origin main
-```
-6. Adding local file in the future:
-
-```bash
-git add .
-# Adds the file to your local repository and stages it for commit. To unstage a file, use 'git reset HEAD YOUR-FILE'.
-git commit -m "Commit Description"
-# Commits the tracked changes and prepares them to be pushed to a remote repository. To remove this commit and modify the file, use 'git reset --soft HEAD~1' and commit and add the file again.
-git push origin main
-# Pushes the changes in your local repository up to the remote repository you specified as the origin
-```
+Visit the `external IP` in your browser to check if the nginx server is working. It should open a `404` nginx page.
 
