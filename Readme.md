@@ -414,21 +414,42 @@ In the Proxmox web interface. Click on each VM of the cluster and create snapsho
 
 Make sure to create new snapshots everytime you make major changes.
 
-### Installing helm charts
+### Installing Wordpress Helm chart
 
-#### nginx-ingress-controller
+I'll be using the ready helm chart from `bitnami`
 
-I'll be using the `nginx-ingress-controller` chart from the `bitnami` repo.
-
-1. Installation:
-```bash
-helm install nginx-ingress bintami/nginx-ingress-controller
-```
-2. Check status:
+1. Install the chart in a dedicated namespace:
 
 ```bash
-kubectl get --namespace default svc -w nginx-ingress-nginx-ingress-controller
+helm install wordpress bitnami/wordpress --namespace wordpress --create-namespace
 ```
 
-Visit the `external IP` in your browser to check if the nginx server is working. It should open a `404` nginx page.
+2. Output after installation. Follow the given steps. It takes a few moments to get all services running:
+
+```bash
+Your WordPress site can be accessed through the following DNS name from within your cluster:
+
+    wordpress.wordpress.svc.cluster.local (port 80)
+
+To access your WordPress site from outside the cluster follow the steps below:
+
+1. Get the WordPress URL by running these commands:
+
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+        Watch the status with: 'kubectl get svc --namespace wordpress -w wordpress'
+
+   export SERVICE_IP=$(kubectl get svc --namespace wordpress wordpress --include "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}")
+   echo "WordPress URL: http://$SERVICE_IP/"
+   echo "WordPress Admin URL: http://$SERVICE_IP/admin"
+
+2. Open a browser and access WordPress using the obtained URL.
+
+3. Login with the following credentials below to see your blog:
+
+  echo Username: user
+  echo Password: $(kubectl get secret --namespace wordpress wordpress -o jsonpath="{.data.wordpress-password}" | base64 -d)
+
+```
+
+3. Take another snapshot in Proxmox to save the working wordpress environment.
 
