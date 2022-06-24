@@ -1,4 +1,4 @@
-# Setting up k3s cluster running on Proxmox VE
+# Setting up k3s cluster running on Proxmox VE and installing Wordpress using helm
 
 ## Intro and Base Setup
 This is a documentation of my homelab project to learn virtualization, kubernetes, container deployment, nginx, database management systems and web security. It will be changing and evolving, mostly serving as a guide for myself but also to everyone who would like to try out the project.
@@ -19,8 +19,8 @@ Access to the hypervisor web interface is through the given address at `192.168.
 
 The `NUC8i3BEH` workstation is currently running `Solus OS x86_64`. Desktop config files can be found in the [`desktop` repo](https://github.com/iostopan/desktop)
 
+![AltText](https://raw.githubusercontent.com/iostopan/desktop/main/scrot.png)
 
-![[scrot.png]]
 
 ## GitHub Repo
 
